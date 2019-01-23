@@ -8,6 +8,7 @@ var apps = []string{
 	"ballerina",
 	"burrow",
 	"chronograf",
+	"clair",
 	"consul",
 	"couchdb",
 	"cyberchef",
