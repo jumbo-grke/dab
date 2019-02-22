@@ -1,54 +1,29 @@
 #!/bin/sh
-# Description: List all repositories
+# Description: List all defined repositories
 # vim: ft=sh ts=4 sw=4 sts=4 noet
 set -euf
 
 # shellcheck disable=SC1090
 . "$DAB/lib/update.sh"
 
-dab repo fetch
-
 repo_data=''
 repo_row() {
 	repo_data="$repo_data
-$1\`$2\`$3\`$4\`$5"
+$1\`$2\`$3"
 }
 
 set +f
-for dir in "$DAB_CONF_PATH"/repo/*; do
-	repo="$(basename "$dir")"
-
-	status='not downloaded'
-	[ -d "$DAB_REPO_PATH/$repo" ] && status='downloaded'
-
-	uptodate=''
-	if [ "$status" != 'not downloaded' ]; then
-		if check_repo_is_up_to_date "$repo"; then
-			uptodate='✓'
-		else
-			uptodate='✗'
-		fi
-	fi
-
-	clean=''
-	if [ "$status" != 'not downloaded' ]; then
-		if check_repo_is_clean "$repo"; then
-			clean='✓'
-		else
-			clean='✗'
-		fi
-	fi
-
-	url="$(dab config get repo/"$repo"/website)"
-
-	repo_row "$repo" "$status" "${clean:-}" "${uptodate:-}" "$url"
-done
+# shellcheck disable=SC2125
+repos=$(ls "$DAB_CONF_PATH/repo/")
 set -f
 
-colorize_table() {
-	cat | sed \
-		-e 's/✓/\\e[0;32m✓\\e[0m/g' \
-		-e 's/✗/\\e[0;31m✗\\e[0m/g'
-}
+for repo in $repos; do
+	status='not cloned'
+	[ -d "$DAB_REPO_PATH/$repo" ] && status='cloned'
 
-printf '%b\n' "$(echo "$repo_data" | column -s'\`' -o' | ' -t -N REPO,STATUS,CLEAN,UPTODATE,URL -R status | colorize_table)"
+	site="$(dab config get repo/"$repo"/website)"
+
+	repo_row "$repo" "$status" "$site"
+done
+
+printf '%b\n' "$(echo "$repo_data" | column -s'\`' -o' | ' -t -N REPO,STATUS,SITE -R status)"
